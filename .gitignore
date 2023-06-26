@@ -33,5 +33,6 @@
 
 
 # add by myself
-weights
+weights/
+resources/
 build_detect_cpu/
