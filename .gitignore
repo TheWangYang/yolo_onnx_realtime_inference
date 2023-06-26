@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+
+# add by myself
+weights
+build_detect_cpu/
