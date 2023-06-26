@@ -35,4 +35,5 @@
 # add by myself
 weights/
 resources/
-build_detect_cpu/
+build_hangtian_cpu/
+build_official_detect_cpu/

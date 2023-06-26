@@ -15,7 +15,7 @@ std::vector<std::string> load_class_list()
 
 void load_net(cv::dnn::Net &net, bool is_cuda)
 {
-    auto result = cv::dnn::readNet("weights/yolov5n.engine");
+    auto result = cv::dnn::readNet("weights/best.onnx");
     if (is_cuda)
     {
         std::cout << "Attempty to use CUDA\n";
@@ -70,7 +70,7 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
     
     float *data = (float *)outputs[0].data;
 
-    const int dimensions = 85;
+    const int dimensions = 12;
     const int rows = 25200;
     
     std::vector<int> class_ids;
@@ -106,7 +106,7 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
 
         }
 
-        data += 85;
+        data += 12;
 
     }
 
@@ -122,21 +122,25 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
     }
 }
 
-int main()
-{
 
+int main(int argc, char** argv)
+{
     std::vector<std::string> class_list = load_class_list();
 
     cv::Mat frame;
-    cv::VideoCapture capture("resources/sample.mp4");
+    int camera_index = 0;  // 默认摄像头索引为 0
+    if (argc > 1)
+    {
+        camera_index = std::atoi(argv[1]);  // 获取命令行参数中的摄像头索引
+    }
+    cv::VideoCapture capture(camera_index);  // 使用默认的摄像头设备
     if (!capture.isOpened())
     {
-        std::cerr << "Error opening video file\n";
+        std::cerr << "Error opening camera\n";
         return -1;
     }
 
-    // bool is_cuda = argc > 1 && strcmp(argv[1], "cuda") == 0;
-    bool is_cuda = true;  //setting by myself
+    bool is_cuda = false;  // 设置为 false
 
     cv::dnn::Net net;
     load_net(net, is_cuda);
@@ -149,14 +153,11 @@ int main()
     while (true)
     {
         capture.read(frame);
-        if (frame.empty())
-        {
-            std::cout << "End of stream\n";
-            break;
-        }
 
         std::vector<Detection> output;
+        std::cout << "here 1\n";
         detect(frame, net, output, class_list);
+        std::cout << "here 2\n";
 
         frame_count++;
         total_frames++;
@@ -165,11 +166,10 @@ int main()
 
         for (int i = 0; i < detections; ++i)
         {
-
             auto detection = output[i];
             auto box = detection.box;
             auto classId = detection.class_id;
-            const auto color = colors[classId % colors.size()];
+            const auto color = cv::Scalar(0, 255, 0);  // 自定义颜色
             cv::rectangle(frame, box, color, 3);
 
             cv::rectangle(frame, cv::Point(box.x, box.y - 20), cv::Point(box.x + box.width, box.y), color, cv::FILLED);
@@ -178,7 +178,6 @@ int main()
 
         if (frame_count >= 30)
         {
-
             auto end = std::chrono::high_resolution_clock::now();
             fps = frame_count * 1000.0 / std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
@@ -188,7 +187,6 @@ int main()
 
         if (fps > 0)
         {
-
             std::ostringstream fps_label;
             fps_label << std::fixed << std::setprecision(2);
             fps_label << "FPS: " << fps;

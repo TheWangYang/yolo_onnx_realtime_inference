@@ -15,7 +15,7 @@ std::vector<std::string> load_class_list()
 
 void load_net(cv::dnn::Net &net, bool is_cuda)
 {
-    auto result = cv::dnn::readNet("weights/yolov5n-seg.onnx");
+    auto result = cv::dnn::readNet("weights/best.onnx");
     if (is_cuda)
     {
         std::cout << "Attempty to use CUDA\n";
@@ -70,7 +70,7 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
     
     float *data = (float *)outputs[0].data;
 
-    const int dimensions = 85;
+    const int dimensions = 12;
     const int rows = 25200;
     
     std::vector<int> class_ids;
@@ -106,7 +106,7 @@ void detect(cv::Mat &image, cv::dnn::Net &net, std::vector<Detection> &output, c
 
         }
 
-        data += 85;
+        data += 12;
 
     }
 
@@ -156,7 +156,9 @@ int main()
         }
 
         std::vector<Detection> output;
+        std::cout << "here 1\n";
         detect(frame, net, output, class_list);
+        std::cout << "here 2\n";
 
         frame_count++;
         total_frames++;
