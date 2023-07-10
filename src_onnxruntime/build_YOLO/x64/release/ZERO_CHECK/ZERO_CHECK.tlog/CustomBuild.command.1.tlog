@@ -1,0 +1,10 @@
+^E:\_CPP_BACKEND_INFERENCE\YOLO_ONNX_REALTIME_INFERENCE\SRC_ONNXRUNTIME\BUILD_YOLO\CMAKEFILES\8DEC4AA74700117F0A8F11BAFE9B2811\GENERATE.STAMP.RULE
+setlocal
+F:\CMake\bin\cmake.exe -SE:/_cpp_backend_inference/yolo_onnx_realtime_inference/src_onnxruntime -BE:/_cpp_backend_inference/yolo_onnx_realtime_inference/src_onnxruntime/build_YOLO --check-stamp-list CMakeFiles/generate.stamp.list --vs-solution-file E:/_cpp_backend_inference/yolo_onnx_realtime_inference/src_onnxruntime/build_YOLO/onnxruntime_inference.sln
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

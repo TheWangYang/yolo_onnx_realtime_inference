@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="E:\_cpp_backend_inference\yolo_onnx_realtime_inference\src_onnxruntime\build_hangtian\CMakeFiles\c5acb0a7770fdcea5550a138815a4506\generate.stamp.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{F5064231-4264-395B-84A8-6222B1B364AB}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\_cpp_backend_inference\yolo_onnx_realtime_inference\src_onnxruntime\onnxruntime_inference_hangtian.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\_cpp_backend_inference\yolo_onnx_realtime_inference\src_onnxruntime\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{01A02380-EDFD-3B6D-AB2E-6D4211A243BA}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

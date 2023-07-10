@@ -1,0 +1,10 @@
+^E:\_CPP_BACKEND_INFERENCE\YOLO_ONNX_REALTIME_INFERENCE\SRC_ONNXRUNTIME\CMAKELISTS.TXT
+setlocal
+F:\CMake\bin\cmake.exe -SE:/_cpp_backend_inference/yolo_onnx_realtime_inference/src_onnxruntime -BE:/_cpp_backend_inference/yolo_onnx_realtime_inference/src_onnxruntime/build_hangtian --check-stamp-file E:/_cpp_backend_inference/yolo_onnx_realtime_inference/src_onnxruntime/build_hangtian/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal & call :cmErrorLevel %errorlevel% & goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd

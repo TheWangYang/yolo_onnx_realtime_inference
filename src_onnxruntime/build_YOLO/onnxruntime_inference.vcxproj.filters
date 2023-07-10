@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="E:\_cpp_backend_inference\yolo_onnx_realtime_inference\src_onnxruntime\onnxruntime_inference_coco_dataset.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="E:\_cpp_backend_inference\yolo_onnx_realtime_inference\src_onnxruntime\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{8FF7E801-E7E2-3506-9531-61526002757D}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

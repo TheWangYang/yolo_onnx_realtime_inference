@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <ProjectOutputs>
+    <ProjectOutput>
+      <FullPath>E:\_cpp_backend_inference\yolo_onnx_realtime_inference\src_onnxruntime\build_hangtian\x64\release\ZERO_CHECK</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>E:\_cpp_backend_inference\yolo_onnx_realtime_inference\src_onnxruntime\build_hangtian\Release\onnxruntime_inference.exe</FullPath>
+    </ProjectOutput>
+    <ProjectOutput>
+      <FullPath>E:\_cpp_backend_inference\yolo_onnx_realtime_inference\src_onnxruntime\build_hangtian\x64\release\ALL_BUILD</FullPath>
+    </ProjectOutput>
+  </ProjectOutputs>
+  <ContentFiles />
+  <SatelliteDlls />
+  <NonRecipeFileRefs />
+</Project>
