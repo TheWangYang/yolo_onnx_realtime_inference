@@ -37,5 +37,6 @@ weights/
 resources/
 src/build/
 src/weights/
+test/build/
 
 

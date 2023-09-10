@@ -21,11 +21,20 @@ using namespace std;
 using namespace cv;
 using namespace Ort;
 
+// 定义BoxInfo结构类型
+typedef struct BoxInfo
+{
+	float x1;
+	float y1;
+	float x2;
+	float y2;
+	float score;
+	int label;
+} BoxInfo;
 
 //向外暴露
 extern "C"{
-	__declspec(dllexport) int detect_per_image(const char* image_path, const char* result_path);
-	__declspec(dllexport) int detect_per_video(const char* inputVideoPath, const char* outputVideoPath);
+	__declspec(dllexport) int detect_per_YUV420_image(const char* image_buff, uint width, uint hight, std::vector<BoxInfo>& result);
 }
 
 // 自定义配置结构
@@ -38,22 +47,11 @@ struct Configuration
 	string modelpath;
 };
 
-// 定义BoxInfo结构类型
-typedef struct BoxInfo
-{
-	float x1;
-	float y1;
-	float x2;
-	float y2;
-	float score;
-	int label;
-} BoxInfo;
-
 class YOLOv5
 {
 public:
 	YOLOv5(Configuration config);
-	void detect(Mat& frame);
+	vector<BoxInfo> detect(Mat& frame);
 private:
 	float confThreshold;
 	float nmsThreshold;
@@ -134,7 +132,6 @@ YOLOv5::YOLOv5(Configuration config)
 	this->inpWidth = input_node_dims[0][3];
 	this->nout = output_node_dims[0][2];      // 5+classes
 	this->num_proposal = output_node_dims[0][1];  // pre_box
-
 }
 
 
@@ -224,7 +221,8 @@ void YOLOv5::nms(vector<BoxInfo>& input_boxes)
 	input_boxes.erase(remove_if(input_boxes.begin(), input_boxes.end(), [&idx_t, &remove_flags](const BoxInfo& f) { return remove_flags[idx_t++]; }), input_boxes.end());
 }
 
-void YOLOv5::detect(Mat& frame)
+// 模型检测代码，返回对应的boxes数组
+vector<BoxInfo> YOLOv5::detect(Mat& frame)
 {
 	int newh = 0, neww = 0, padh = 0, padw = 0;
 	Mat dstimg = this->resize_image(frame, &newh, &neww, &padh, &padw);   //改大小后做padding防失真
@@ -232,26 +230,19 @@ void YOLOv5::detect(Mat& frame)
 	// 定义一个输入矩阵，int64_t是下面作为输入参数时的类型
 	array<int64_t, 4> input_shape_{ 1, 3, this->inpHeight, this->inpWidth };  //1,3,640,640
 	auto allocator_info = MemoryInfo::CreateCpu(OrtDeviceAllocator, OrtMemTypeCPU);
-	cout << "detect 1" << endl;
     //使用Ort库创建一个输入张量，其中包含了需要进行目标检测的图像数据。
 	Value input_tensor_ = Value::CreateTensor<float>(allocator_info, input_image_.data(), input_image_.size(), input_shape_.data(), input_shape_.size());
-	cout << "detect 2" << endl;
-	// 开始推理
-	//打印input_names内容
-	cout << "&input_names[0]: " << input_names.data() << endl;
-	cout << "output_names.data(): " << output_names.data() << endl;
-	cout << "output_names.size(): " << output_names.size() << endl;
-	// &input_names[0]
 	vector<Value> ort_outputs = ort_session->Run(Ort::RunOptions{ nullptr }, input_names.data(), &input_tensor_, 1, output_names.data(), output_names.size());
-	cout << "detect 3" << endl;
-	//generate proposals
-    //cout<<"ort_outputs_size"<<ort_outputs.size()<<endl;
+    
+	cout<<"ort_outputs_size"<<ort_outputs.size()<<endl;
+	std::cout << "inner debug 7" << std::endl;
+
+	//generate boxes
 	vector<BoxInfo> generate_boxes;  // BoxInfo自定义的结构体
     float ratioh = (float)frame.rows / newh, ratiow = (float)frame.cols / neww;  //原图高和新高比，原图宽与新宽比
 	float* pdata = ort_outputs[0].GetTensorMutableData<float>(); // GetTensorMutableData
-	cout << "detect 4" << endl;
 	for(int i = 0; i < num_proposal; ++i) // 遍历所有的num_pre_boxes
-	{   
+	{
 		int index = i * nout;      // prob[b*num_pred_boxes*(classes+5)]  
 		float obj_conf = pdata[index + 4];  // 置信度分数
         //cout<<"k"<<obj_conf<<endl;
@@ -281,6 +272,7 @@ void YOLOv5::detect(Mat& frame)
 				float xmax = (cx - padw + 0.5 * w)*ratiow;
 				float ymax = (cy - padh + 0.5 * h)*ratioh;
 				//cout<<xmin<<ymin<<xmax<<ymax<<endl;
+				//得到保存boxes的数组
 				generate_boxes.push_back(BoxInfo{ xmin, ymin, xmax, ymax, max_class_socre, class_idx });
 			}
 		}
@@ -289,137 +281,41 @@ void YOLOv5::detect(Mat& frame)
 	// Perform non maximum suppression to eliminate redundant overlapping boxes with
 	// lower confidences
 	nms(generate_boxes);
-	for (size_t i = 0; i < generate_boxes.size(); ++i)
-	{
-		int xmin = int(generate_boxes[i].x1);
-		int ymin = int(generate_boxes[i].y1);
-		rectangle(frame, Point(xmin, ymin), Point(int(generate_boxes[i].x2), int(generate_boxes[i].y2)), Scalar(0, 0, 255), 2);
-		string label = format("%.2f", generate_boxes[i].score);
-		label = this->classes[generate_boxes[i].label] + ":" + label;
-		putText(frame, label, Point(xmin, ymin - 5), FONT_HERSHEY_SIMPLEX, 0.75, Scalar(0, 255, 0), 1);
-	}
+
+	// 返回输出得到的boxes
+	return generate_boxes;
+
+	//循环
+	// for (size_t i = 0; i < generate_boxes.size(); ++i)
+	// {
+	// 	int xmin = int(generate_boxes[i].x1);
+	// 	int ymin = int(generate_boxes[i].y1);
+	// 	rectangle(frame, Point(xmin, ymin), Point(int(generate_boxes[i].x2), int(generate_boxes[i].y2)), Scalar(0, 0, 255), 2);
+	// 	string label = format("%.2f", generate_boxes[i].score);
+	// 	label = this->classes[generate_boxes[i].label] + ":" + label;
+	// 	putText(frame, label, Point(xmin, ymin - 5), FONT_HERSHEY_SIMPLEX, 0.75, Scalar(0, 255, 0), 1);
+	// }
 }
 
-//实现多张图片批量推理
-//参数为：输入图片文件夹路径或输出图片文件夹路径
-int detect_per_image(const char* image_path, const char* result_path)
+
+//实现单张图片推理
+int detect_per_YUV420_image(const char* image_buff, uint width, uint height, vector<BoxInfo>& result)
 {
-	//打印图片路径
-	cout << "Usage: " << image_path << " <image_path>" << endl;
-	//读取图片
-    cv::Mat frame = cv::imread(image_path);
+	// 将YUV格式转换为cv::Mat格式
+	// 创建一个Mat对象，将YUV数据加载到其中
+    cv::Mat yuvImage(height * 3 / 2, width, CV_8UC1, (void*)image_buff);
+    cv::Mat frame_rgb;
+    // 将YUV420数据转换为BGR格式
+    cv::cvtColor(yuvImage, frame_rgb, cv::COLOR_YUV2BGR_I420);
+	//cv::imwrite("output.jpg", frame_rgb);
 
-	double totalTime = 0.0;
-    int frameCount = 0;
-    double fps = 0.0;
-
-	Configuration yolo_nets = { 0.3, 0.5, 0.3, "./weights/best.onnx" };
+	// 置信度设置为0.0，进行测试
+    Configuration yolo_nets = { 0.0, 0.0, 0.0, "./weights/best.onnx" };
     YOLOv5 yolo_model(yolo_nets);
-	clock_t startTime, endTime; // 计算时间
-    
-    if (frame.empty())
-    {
-        std::cout << "Failed to load image: " << image_path << std::endl;
-        return -1;
-    }
 
-	double timeStart = (double)getTickCount();
-	startTime = clock(); // 计时开始
-
-	cout << "debug 2" << endl;
-
-	// 计算FPS
-	double start = cv::getTickCount();
-	cout << "debug 3" << endl;
-	yolo_model.detect(frame);
-	cout << "debug 4" << endl;
-	double end = cv::getTickCount();
-	double elapsed = (end - start) / cv::getTickFrequency();
-	endTime = clock(); // 计时结束
-	double nTime = ((double)getTickCount() - timeStart) / getTickFrequency();
-	cout << "clock_running time is: " << (double)(endTime - startTime) / CLOCKS_PER_SEC << "s" << endl;
-	cout << "The run time is: " << (double)clock() / CLOCKS_PER_SEC << "s" << endl;
-	cout << "getTickCount_running time: " << nTime << " sec" << endl;
-
-	totalTime += elapsed;
-	frameCount++;
-
-	fps = frameCount / totalTime;
-	std::stringstream ss;
-	ss << "FPS: " << fps;
-	cv::putText(frame, ss.str(), cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
-
-	//保存图像到result_path中
-  	cv::imwrite(result_path, frame);
-	cout << "save result image success." << result_path << endl;
-    return 0;
+	// 得到对应的检测box数组
+    result = yolo_model.detect(frame_rgb);
+	
+	// 返回结果数组的长度
+	return 0;
 }
-
-//检测单个视频流2
-int detect_per_video(const char* inputVideoPath, const char* outputVideoPath)
-{
-    double totalTime = 0.0;
-    int frameCount = 0;
-    double fps = 0.0;
-
-    cv::VideoCapture capture(inputVideoPath); // Open video from specified path
-
-    if (!capture.isOpened())
-    {
-        cout << "Failed to open the video file." << endl;
-        return -1;
-    }
-
-    Configuration yolo_nets = { 0.3, 0.5, 0.3, "./weights/best.onnx" };
-    YOLOv5 yolo_model(yolo_nets);
-    clock_t startTime, endTime;
-
-    Mat frame;
-    while (true)
-    {
-        capture.read(frame); // Read video frame
-        if (frame.empty())
-        {
-            cout << "Failed to capture a frame." << endl;
-            break;
-        }
-
-        double timeStart = (double)getTickCount();
-        startTime = clock();
-
-        double start = cv::getTickCount();
-        yolo_model.detect(frame);
-        double end = cv::getTickCount();
-        double elapsed = (end - start) / cv::getTickFrequency();
-        endTime = clock();
-        double nTime = ((double)getTickCount() - timeStart) / getTickFrequency();
-
-        totalTime += elapsed;
-        frameCount++;
-
-        fps = frameCount / totalTime;
-        std::stringstream ss;
-        ss << "FPS: " << fps;
-        cv::putText(frame, ss.str(), cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 0, 255), 2);
-
-        if (outputVideoPath != nullptr && *outputVideoPath != '\0')
-        {
-            VideoWriter writer(outputVideoPath, VideoWriter::fourcc('M', 'J', 'P', 'G'), 25, frame.size()); // Adjust frame rate (25 fps) if needed
-            if (writer.isOpened())
-            {
-                writer.write(frame); // Save frame to output video
-            }
-            else
-            {
-                cout << "Failed to write frame to output video." << endl;
-            }
-        }
-
-        totalTime = 0.0;
-        frameCount = 0;
-    }
-
-    capture.release();
-    return 0;
-}
-

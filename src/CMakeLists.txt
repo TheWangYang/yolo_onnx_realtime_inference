@@ -7,9 +7,9 @@ project(new_inference)
 set(ONNXRUNTIME_DIR F:\\cpp_tools\\tools\\onnxruntime-win-x64-1.10.0)
 
 # 添加源文件
-# add_executable(new_inference new_inference.cpp)
+# add_executable(new_inference infer_xinjiang.cpp)
 # 执行得到dll文件
-ADD_LIBRARY(new_inference SHARED new_inference.cpp)
+ADD_LIBRARY(new_inference SHARED infer_xinjiang.cpp)
 
 # 添加 ONNX Runtime 的头文件路径
 target_include_directories(new_inference PRIVATE ${ONNXRUNTIME_DIR}/include)
